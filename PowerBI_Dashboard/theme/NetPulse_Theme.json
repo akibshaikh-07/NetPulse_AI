@@ -1,0 +1,25 @@
+{
+  "name": "NetPulse Theme",
+  "dataColors": ["#1F6FB2","#2B9A8F","#8764B8","#E8833A","#F2A93B","#D64550","#605E5C","#7FB2DE"],
+  "background": "#FFFFFF",
+  "foreground": "#252423",
+  "tableAccent": "#1F6FB2",
+  "good": "#2B9A8F",
+  "neutral": "#F2A93B",
+  "bad": "#D64550",
+  "maximum": "#1F6FB2",
+  "center": "#F2A93B",
+  "minimum": "#D64550",
+  "textClasses": {
+    "title": {"fontFace": "Segoe UI Semibold", "fontSize": 12, "color": "#252423"},
+    "label": {"fontFace": "Segoe UI", "fontSize": 10, "color": "#605E5C"},
+    "callout": {"fontFace": "Segoe UI Light", "fontSize": 28, "color": "#0B2A4A"}
+  },
+  "visualStyles": {
+    "page": {"*": {"background": [{"color": {"solid": {"color": "#EAEAEA"}}, "transparency": 0}]}},
+    "*": {"*": {
+      "background": [{"show": true, "color": {"solid": {"color": "#FFFFFF"}}}],
+      "border": [{"show": true, "color": {"solid": {"color": "#E1DFDD"}}, "radius": 2}]
+    }}
+  }
+}

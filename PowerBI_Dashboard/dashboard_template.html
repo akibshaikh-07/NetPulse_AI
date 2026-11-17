@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NetPulse AI Dashboard Preview</title>
+<style>
+:root{--bg:#EAEAEA;--card:#fff;--line:#E1DFDD;--ink:#252423;--mute:#605E5C;--navy:#0B2A4A;--blue:#1F6FB2;--crit:#D64550;--warn:#F2A93B;--ok:#2B9A8F}
+*{box-sizing:border-box}
+body{margin:0;background:#C8C6C4;font-family:"Segoe UI","Liberation Sans",Arial,sans-serif;color:var(--ink);overflow:auto}
+#wrap{width:1280px;margin:0 auto}
+#canvas{position:relative;width:1280px;height:720px;background:var(--bg);overflow:hidden}
+.card{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:2px}
+.card h3{margin:0;padding:9px 12px 0;font-size:12.5px;font-weight:600;color:var(--ink)}
+.kpi{padding:10px 14px}
+.kpi .l{font-size:11.5px;color:var(--mute);font-weight:600}
+.kpi .v{font-size:30px;font-weight:300;color:var(--navy);margin-top:6px;letter-spacing:-.5px}
+.kpi .s{font-size:10.5px;color:var(--mute);margin-top:2px}
+.kpi .bar{position:absolute;left:0;top:0;bottom:0;width:4px}
+svg text{font-family:"Segoe UI","Liberation Sans",Arial,sans-serif}
+.ax{font-size:10px;fill:#605E5C}.dl{font-size:10px;fill:#252423;font-weight:600}
+.grid{stroke:#EDEBE9;stroke-width:1}
+.hit{cursor:pointer}
+.slicer .opt{display:flex;align-items:center;gap:8px;padding:3.5px 12px;font-size:12px;cursor:pointer;color:var(--ink)}
+.slicer .opt:hover{background:#F3F2F1}
+.slicer .box{width:13px;height:13px;border:1px solid #605E5C;border-radius:1px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#fff;background:#fff}
+.slicer .opt.on .box{background:var(--blue);border-color:var(--blue)}
+.slicer .opt .n{margin-left:auto;color:var(--mute);font-size:10.5px}
+#title{position:absolute;left:18px;top:12px}
+#title .t{font-size:21px;font-weight:600;color:var(--navy)}
+#title .s{font-size:11.5px;color:var(--mute);margin-top:2px}
+#clear{position:absolute;right:16px;top:16px;font-size:11.5px;border:1px solid #8A8886;background:#fff;padding:5px 12px;cursor:pointer;color:var(--ink)}
+#clear:hover{background:#F3F2F1}
+#tabs{display:flex;height:32px;background:#F3F2F1;border-top:1px solid #C8C6C4;align-items:flex-end;padding-left:8px;gap:2px}
+#tabs div{padding:7px 18px 6px;font-size:12px;color:#323130;cursor:pointer;border-radius:3px 3px 0 0}
+#tabs div.on{background:#fff;border-bottom:3px solid #F2C811;font-weight:600}
+#tabs div:hover:not(.on){background:#E1DFDD}
+.tw{overflow:auto;position:absolute;left:0;right:0;top:32px;bottom:0}
+table{border-collapse:collapse;width:100%;font-size:11.5px}
+th{position:sticky;top:0;background:#fff;text-align:left;font-weight:600;padding:6px 10px;border-bottom:2px solid #252423;white-space:nowrap}
+td{padding:5px 10px;border-bottom:1px solid #EDEBE9;white-space:nowrap}
+tr:nth-child(even) td{background:#FAF9F8}
+.pill{display:inline-block;padding:1px 8px;border-radius:9px;color:#fff;font-size:10.5px;font-weight:600}
+.db{display:inline-block;height:11px;background:#7FB2DE;vertical-align:middle;margin-right:6px}
+#tip{position:fixed;pointer-events:none;background:#fff;border:1px solid #C8C6C4;box-shadow:0 2px 8px rgba(0,0,0,.2);padding:7px 10px;font-size:11.5px;display:none;z-index:9;line-height:1.5}
+#tip b{font-weight:600}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="canvas"></div><div id="tabs"></div></div>
+<div id="tip"></div>
+<script>
+const D=__DATA__;
+const SEVC={Critical:'#D64550',Warning:'#F2A93B',Normal:'#2B9A8F'};
+const TYPEC={Router:'#1F6FB2',Switch:'#2B9A8F',Server:'#8764B8',Firewall:'#E8833A'};
+const BLUE='#1F6FB2',DIM='#BFD6EA';
+const SITES=[...new Set(D.rows.map(r=>r.site))].sort(), TYPES=['Router','Switch','Server','Firewall'], SEVS=['Critical','Warning','Normal'];
+// slicer selections (sets) and visual cross-filter selections (single values)
+const S={site:new Set(),type:new Set(),sev:new Set()};
+const C={site:null,sev:null,hour:null,reason:null,device:null,type:null};
+let page=0;
+const PAGES=['Network Overview','Incident Analysis','Device Health'];
+
+function rows(excl){
+  return D.rows.filter(r=>
+    (!S.site.size||S.site.has(r.site))&&(!S.type.size||S.type.has(r.type))&&(!S.sev.size||S.sev.has(r.sev))&&
+    (excl==='site'||!C.site||r.site===C.site)&&(excl==='sev'||!C.sev||r.sev===C.sev)&&
+    (excl==='hour'||C.hour===null||r.hour===C.hour)&&(excl==='reason'||!C.reason||r.reasons.includes(C.reason))&&
+    (excl==='device'||!C.device||r.device_name===C.device)&&(excl==='type'||!C.type||r.type===C.type));
+}
+const inc=rs=>rs.filter(r=>r.flag);
+const mean=(a,f)=>a.length?a.reduce((s,r)=>s+f(r),0)/a.length:0;
+const cnt=(a,f)=>{const m={};a.forEach(r=>{const k=f(r);(Array.isArray(k)?k:[k]).forEach(x=>m[x]=(m[x]||0)+1)});return m};
+const fx=(n,d=1)=>n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+
+const tip=document.getElementById('tip');
+function showTip(e,h){tip.innerHTML=h;tip.style.display='block';tip.style.left=Math.min(e.clientX+14,innerWidth-200)+'px';tip.style.top=(e.clientY+14)+'px'}
+function hideTip(){tip.style.display='none'}
+document.addEventListener('mouseover',e=>{const t=e.target.closest('[data-tip]');t?showTip(e,t.dataset.tip):hideTip()});
+document.addEventListener('mousemove',e=>{if(tip.style.display==='block'&&e.target.closest('[data-tip]'))showTip(e,e.target.closest('[data-tip]').dataset.tip)});
+
+// ---------- chart primitives (SVG strings) ----------
+function hbar(items,w,h,key,opts={}){ // items [{k,v,color}]
+  const L=opts.left||84,R=34,T=6,B=4,n=items.length||1,bh=(h-T-B)/n,max=Math.max(1,...items.map(i=>+i.v));
+  let s=`<svg width="${w}" height="${h}">`;
+  items.forEach((it,i)=>{
+    const y=T+i*bh,len=(w-L-R)*(+it.v)/max,sel=C[key]!==null&&C[key]!==undefined, on=C[key]===it.k;
+    const col=it.color||BLUE;
+    s+=`<g class="hit" data-k="${it.k}" data-key="${key}" data-tip="<b>${it.k}</b><br>${opts.metric||'Incidents'}: ${it.v}">
+      <rect x="0" y="${y}" width="${w}" height="${bh}" fill="transparent"/>
+      <text class="ax" x="${L-8}" y="${y+bh/2+3.5}" text-anchor="end">${it.k}</text>
+      <rect x="${L}" y="${y+bh*.18}" width="${Math.max(len,0)}" height="${bh*.64}" fill="${sel&&!on?DIM:col}"/>
+      <text class="dl" x="${L+len+5}" y="${y+bh/2+3.5}">${it.v}</text></g>`;
+  });
+  return s+'</svg>';
+}
+function columns(vals,labels,w,h,key,fmt){
+  const L=30,R=8,T=14,B=34,n=vals.length,max=Math.max(1,...vals),step=Math.ceil(max/4),top=step*4;
+  const bw=(w-L-R)/n;let s=`<svg width="${w}" height="${h}">`;
+  for(let g=0;g<=4;g++){const y=T+(h-T-B)*(1-g/4);s+=`<line class="grid" x1="${L}" x2="${w-R}" y1="${y}" y2="${y}"/><text class="ax" x="${L-6}" y="${y+3}" text-anchor="end">${g*step}</text>`}
+  vals.forEach((v,i)=>{
+    const bh=(h-T-B)*v/top,x=L+i*bw,sel=C[key]!==null,on=C[key]===i;
+    s+=`<g class="hit" data-k="${i}" data-key="${key}" data-tip="<b>${fmt(i)}</b><br>Incidents: ${v}"><rect x="${x}" y="${T}" width="${bw}" height="${h-T-B}" fill="transparent"/>
+    <rect x="${x+bw*.14}" y="${T+(h-T-B)-bh}" width="${bw*.72}" height="${bh}" fill="${sel&&!on?DIM:BLUE}"/>
+    ${v?`<text class="dl" x="${x+bw/2}" y="${T+(h-T-B)-bh-3}" text-anchor="middle">${v}</text>`:''}</g>`;
+    if(i%2===0)s+=`<text class="ax" x="${x+bw/2}" y="${h-B+13}" text-anchor="middle">${labels[i]}</text>`;
+  });
+  return s+`<text class="ax" x="${L+(w-L-R)/2}" y="${h-3}" text-anchor="middle" style="font-weight:600">Hour of day</text></svg>`;
+}
+function donut(items,w,h,key){
+  const cx=w*.36,cy=h/2,R=Math.min(w*.3,h/2-8),r=R*.62,tot=items.reduce((s,i)=>s+i.v,0)||1;let a0=-Math.PI/2,s=`<svg width="${w}" height="${h}">`;
+  items.forEach(it=>{
+    const a1=a0+2*Math.PI*it.v/tot,big=a1-a0>Math.PI?1:0,p=(R_,a)=>[cx+R_*Math.cos(a),cy+R_*Math.sin(a)];
+    const [x1,y1]=p(R,a0),[x2,y2]=p(R,a1-0.0001),[x3,y3]=p(r,a1-0.0001),[x4,y4]=p(r,a0);
+    const sel=C[key]!==null,on=C[key]===it.k;
+    s+=`<path class="hit" data-k="${it.k}" data-key="${key}" data-tip="<b>${it.k}</b><br>Incidents: ${it.v} (${fx(100*it.v/tot,1)}%)" d="M${x1},${y1} A${R},${R} 0 ${big} 1 ${x2},${y2} L${x3},${y3} A${r},${r} 0 ${big} 0 ${x4},${y4}Z" fill="${SEVC[it.k]}" opacity="${sel&&!on?.35:1}" stroke="#fff" stroke-width="1.5"/>`;a0=a1;
+  });
+  s+=`<text x="${cx}" y="${cy+3}" text-anchor="middle" style="font-size:26px;font-weight:300;fill:#0B2A4A">${tot}</text><text class="ax" x="${cx}" y="${cy+19}" text-anchor="middle">incidents</text>`;
+  items.forEach((it,i)=>{const y=h/2-14+i*26,x=w*.72;s+=`<rect x="${x}" y="${y-9}" width="10" height="10" fill="${SEVC[it.k]}"/><text class="ax" x="${x+16}" y="${y}" style="fill:#252423;font-size:11.5px">${it.k}</text><text class="ax" x="${x+16}" y="${y+12}">${it.v} · ${fx(100*it.v/tot,0)}%</text>`});
+  return s+'</svg>';
+}
+function scatter(pts,w,h){
+  const L=44,R=14,T=10,B=34,mx=Math.ceil(Math.max(10,...pts.map(p=>p.x))*1.1/20)*20,my=Math.ceil(Math.max(.5,...pts.map(p=>p.y))*1.15*2)/2;
+  let s=`<svg width="${w}" height="${h}">`;
+  for(let g=0;g<=4;g++){const y=T+(h-T-B)*(1-g/4);s+=`<line class="grid" x1="${L}" x2="${w-R}" y1="${y}" y2="${y}"/><text class="ax" x="${L-6}" y="${y+3}" text-anchor="end">${fx(my*g/4,1)}</text>`;
+    const x=L+(w-L-R)*g/4;s+=`<text class="ax" x="${x}" y="${h-B+14}" text-anchor="middle">${fx(mx*g/4,0)}</text>`}
+  pts.forEach(p=>{const x=L+(w-L-R)*p.x/mx,y=T+(h-T-B)*(1-p.y/my),r=5+p.n*2.2,on=C.device===p.k,sel=C.device!==null;
+    s+=`<circle class="hit" data-k="${p.k}" data-key="device" cx="${x}" cy="${y}" r="${r}" fill="${TYPEC[p.t]}" fill-opacity="${sel&&!on?.2:.7}" stroke="#fff" data-tip="<b>${p.k}</b> (${p.t})<br>Avg latency: ${fx(p.x)} ms<br>Avg packet loss: ${fx(p.y,2)}%<br>Incidents: ${p.n}"/>`});
+  s+=`<text class="ax" x="${L+(w-L-R)/2}" y="${h-2}" text-anchor="middle" style="font-weight:600">Average latency (ms)</text><text class="ax" transform="translate(11,${T+(h-T-B)/2}) rotate(-90)" text-anchor="middle" style="font-weight:600">Avg packet loss (%)</text>`;
+  TYPES.forEach((t,i)=>{s+=`<circle cx="${w-250+i*62}" cy="${T+4}" r="4.5" fill="${TYPEC[t]}"/><text class="ax" x="${w-242+i*62}" y="${T+8}">${t}</text>`});
+  return s+'</svg>';
+}
+
+// ---------- layout helpers ----------
+const cv=document.getElementById('canvas');
+const box=(x,y,w,h,inner,cls='')=>`<div class="card ${cls}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">${inner}</div>`;
+const chart=(x,y,w,h,title,svg)=>box(x,y,w,h,`<h3>${title}</h3><div style="position:absolute;left:0;top:30px">${svg}</div>`);
+const kpi=(x,y,w,l,v,s,c)=>box(x,y,w,86,`<div class="bar" style="background:${c}"></div><div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`);
+function slicer(x,y,w,h,title,key,opts,counts){
+  return box(x,y,w,h,`<h3>${title}</h3><div style="margin-top:6px">${opts.map(o=>`<div class="opt ${S[key].has(o)?'on':''}" data-sl="${key}" data-v="${o}"><span class="box">${S[key].has(o)?'✓':''}</span>${o}<span class="n">${counts[o]||0}</span></div>`).join('')}</div>`,'slicer');
+}
+function header(sub){return `<div id="title"><div class="t">NetPulse AI | Simulated Network Operations Dashboard</div><div class="s">${sub}</div></div><div id="clear">Clear all filters</div>`}
+function slicers(){
+  const all=D.rows;
+  return slicer(16,72,200,200,'Site','site',SITES,cnt(all.filter(r=>r.flag),r=>r.site))+
+    slicer(16,284,200,150,'Device type','type',TYPES,cnt(all.filter(r=>r.flag),r=>r.type))+
+    slicer(16,446,200,132,'Severity','sev',SEVS,cnt(all,r=>r.sev))+
+    box(16,590,200,114,`<h3>About this report</h3><div style="padding:8px 12px;font-size:10.5px;color:var(--mute);line-height:1.45">Simulated hourly telemetry for 30 devices on 16-Nov-2026. Incidents are rule-based threshold breaches, not ML predictions.</div>`);
+}
+
+// ---------- pages ----------
+function page0(){
+  const R=rows(),I=inc(R),crit=I.filter(r=>r.sev==='Critical').length,devs=new Set(R.map(r=>r.device_id)).size;
+  let h=header('Page 1 of 3 · Network Overview · 16 Nov 2026 · hourly readings')+slicers();
+  const x0=232,kw=(1264-x0-4*12)/5;
+  h+=kpi(x0,72,kw,'Total Devices',devs,`${R.length} readings`,'#1F6FB2')+kpi(x0+(kw+12),72,kw,'Total Incidents',I.length,`${fx(100*I.length/(R.length||1),1)}% of readings`,'#F2A93B')+
+    kpi(x0+2*(kw+12),72,kw,'Critical Incidents',crit,`${I.length-crit} warning`,'#D64550')+kpi(x0+3*(kw+12),72,kw,'Availability %',fx(mean(R,r=>r.avail)*100,2)+'%',`${R.filter(r=>!r.avail).length} unavailable readings`,'#2B9A8F')+
+    kpi(x0+4*(kw+12),72,kw,'Avg Latency (ms)',fx(mean(R,r=>r.lat),1),`Avg health score ${fx(mean(R,r=>r.health),1)}`,'#8764B8');
+  const sv=cnt(inc(rows('sev')),r=>r.sev),sd=['Critical','Warning'].map(k=>({k,v:sv[k]||0}));
+  h+=chart(x0,170,300,250,'Incident count by severity',donut(sd,300,218,'sev'));
+  const st=cnt(inc(rows('site')),r=>r.site),sdat=SITES.map(k=>({k,v:st[k]||0})).sort((a,b)=>b.v-a.v);
+  h+=chart(x0+312,170,350,250,'Incidents by site',hbar(sdat,350,214,'site',{left:96}));
+  const tt=cnt(inc(rows('type')),r=>r.type),tdat=TYPES.map(k=>({k,v:tt[k]||0,color:TYPEC[k]})).sort((a,b)=>b.v-a.v);
+  h+=chart(x0+674,170,358,250,'Incidents by device type',hbar(tdat,358,214,'type',{left:80}));
+  const hh=cnt(inc(rows('hour')),r=>r.hour),hv=[...Array(24)].map((_,i)=>hh[i]||0);
+  h+=chart(x0,432,560,272,'Incident trend by hour of day',columns(hv,[...Array(24)].map((_,i)=>String(i).padStart(2,'0')),560,240,'hour',i=>String(i).padStart(2,'0')+':00'));
+  const dd=cnt(inc(rows('device')),r=>r.device_name),ddat=Object.entries(dd).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v||a.k.localeCompare(b.k)).slice(0,8);
+  h+=chart(x0+572,432,460,272,'Top 8 devices by incidents',hbar(ddat,460,236,'device',{left:90}));
+  return h;
+}
+function page1(){
+  const R=rows(),I=inc(R);let h=header('Page 2 of 3 · Incident Analysis · 16 Nov 2026')+slicers();
+  const x0=232,kw=(1032-3*12)/4,crit=I.filter(r=>r.sev==='Critical').length;
+  h+=kpi(x0,72,kw,'Total Incidents',I.length,'threshold breaches','#F2A93B')+kpi(x0+(kw+12),72,kw,'Critical',crit,`${fx(100*crit/(I.length||1),0)}% of incidents`,'#D64550')+
+    kpi(x0+2*(kw+12),72,kw,'Warning',I.length-crit,`${fx(100*(I.length-crit)/(I.length||1),0)}% of incidents`,'#F2A93B')+kpi(x0+3*(kw+12),72,kw,'Device Unavailable Events',I.filter(r=>r.reasons.includes('Device unavailable')).length,'availability = 0','#605E5C');
+  const rc=cnt(inc(rows('reason')),r=>r.reasons),rd=Object.entries(rc).map(([k,v])=>({k,v,color:/Critical|unavailable/.test(k)?'#D64550':'#F2A93B'})).sort((a,b)=>b.v-a.v);
+  h+=chart(x0,170,500,250,'Incidents by anomaly reason',hbar(rd,500,214,'reason',{left:150}));
+  const dc=cnt(inc(rows('device')),r=>r.device_name),dr=Object.entries(dc).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v||a.k.localeCompare(b.k)).slice(0,10);
+  h+=chart(x0+512,170,520,250,'Incidents by device (top 10)',hbar(dr,520,214,'device',{left:90}));
+  const tr=I.slice().sort((a,b)=>a.ts<b.ts?-1:1).map(r=>`<tr><td>${r.inc_id}</td><td>${r.ts}</td><td>${r.device_name}</td><td>${r.site}</td><td><span class="pill" style="background:${SEVC[r.sev]}">${r.sev}</span></td><td>${r.reasons.join('; ')}</td><td style="text-align:right">${fx(r.cpu,1)}</td><td style="text-align:right">${fx(r.lat,1)}</td><td style="text-align:right">${fx(r.loss,2)}</td></tr>`).join('');
+  h+=box(x0,432,1032,272,`<h3>Incident log</h3><div class="tw"><table><thead><tr><th>Incident</th><th>Timestamp</th><th>Device</th><th>Site</th><th>Severity</th><th>Anomaly reason</th><th style="text-align:right">CPU %</th><th style="text-align:right">Latency ms</th><th style="text-align:right">Loss %</th></tr></thead><tbody>${tr}</tbody></table></div>`);
+  return h;
+}
+function page2(){
+  const R=rows();let h=header('Page 3 of 3 · Device Health · 16 Nov 2026')+slicers();
+  const x0=232,kw=(1032-3*12)/4;
+  h+=kpi(x0,72,kw,'Avg Health Score',fx(mean(R,r=>r.health),1),'0–100 weighted score','#1F6FB2')+kpi(x0+(kw+12),72,kw,'Avg CPU (%)',fx(mean(R,r=>r.cpu),1),'warning ≥ 80 · critical ≥ 90','#8764B8')+
+    kpi(x0+2*(kw+12),72,kw,'Avg Latency (ms)',fx(mean(R,r=>r.lat),1),'warning ≥ 100 · critical ≥ 200','#2B9A8F')+kpi(x0+3*(kw+12),72,kw,'Avg Packet Loss (%)',fx(mean(R,r=>r.loss),2),'warning ≥ 2 · critical ≥ 5','#D64550');
+  const byd={};R.forEach(r=>{const d=byd[r.device_name]||(byd[r.device_name]={k:r.device_name,site:r.site,t:r.type,n:0,c:0,cpu:0,lat:0,loss:0,av:0,hs:0,inc:0});d.n++;d.cpu+=r.cpu;d.lat+=r.lat;d.loss+=r.loss;d.av+=r.avail;d.hs+=r.health;d.inc+=r.flag});
+  const dv=Object.values(byd).map(d=>({...d,cpu:d.cpu/d.n,lat:d.lat/d.n,loss:d.loss/d.n,av:100*d.av/d.n,hs:d.hs/d.n}));
+  const low=dv.slice().sort((a,b)=>a.hs-b.hs).slice(0,10).map(d=>({k:d.k,v:fx(d.hs,1),color:d.hs<78?'#D64550':d.hs<82?'#F2A93B':BLUE}));
+  const lowmax=low.length?0:0;
+  h+=chart(x0,170,430,250,'Lowest 10 devices by avg health score',hbar(low,430,214,'device',{left:90,metric:'Avg health'}));
+  h+=chart(x0+442,170,590,250,'Latency vs packet loss by device (bubble = incidents)',scatter(dv.map(d=>({k:d.k,t:d.t,x:d.lat,y:d.loss,n:d.inc})),590,218));
+  const tr=dv.sort((a,b)=>a.hs-b.hs).map(d=>{const bg=d.hs<78?'#FBD5D8':d.hs<82?'#FDEBC8':'#D6EFEA';
+    return `<tr><td>${d.k}</td><td>${d.site}</td><td>${d.t}</td><td style="background:${bg}"><span class="db" style="width:${(d.hs-60)*2.2}px"></span>${fx(d.hs,1)}</td><td style="text-align:right">${fx(d.cpu,1)}</td><td style="text-align:right">${fx(d.lat,1)}</td><td style="text-align:right">${fx(d.loss,2)}</td><td style="text-align:right">${fx(d.av,1)}%</td><td style="text-align:right">${d.inc}</td></tr>`}).join('');
+  h+=box(x0,432,1032,272,`<h3>Device health detail</h3><div class="tw"><table><thead><tr><th>Device</th><th>Site</th><th>Type</th><th>Avg health score</th><th style="text-align:right">Avg CPU %</th><th style="text-align:right">Avg latency ms</th><th style="text-align:right">Avg loss %</th><th style="text-align:right">Availability</th><th style="text-align:right">Incidents</th></tr></thead><tbody>${tr}</tbody></table></div>`);
+  return h;
+}
+const PG=[page0,page1,page2];
+function render(){
+  cv.innerHTML=PG[page]();
+  document.getElementById('tabs').innerHTML=PAGES.map((p,i)=>`<div class="${i===page?'on':''}" data-pg="${i}">${p}</div>`).join('');
+}
+document.addEventListener('click',e=>{
+  const sl=e.target.closest('[data-sl]'),hit=e.target.closest('.hit'),pg=e.target.closest('[data-pg]');
+  if(e.target.id==='clear'){Object.values(S).forEach(s=>s.clear());Object.keys(C).forEach(k=>C[k]=null)}
+  else if(sl){const s=S[sl.dataset.sl],v=sl.dataset.v;s.has(v)?s.delete(v):s.add(v)}
+  else if(hit){const k=hit.dataset.key;let v=hit.dataset.k;if(k==='hour')v=+v;C[k]=C[k]===v?null:v}
+  else if(pg){page=+pg.dataset.pg}
+  else return;
+  hideTip();render();
+});
+window.go=n=>{page=n;render()};
+window.setFilter=(k,v)=>{k in S?S[k].add(v):C[k]=v;render()};
+render();
+</script>
+</body>
+</html>

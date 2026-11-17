@@ -1,0 +1,42 @@
+incident_id,timestamp,device_id,device_name,device_type,site,severity,anomaly_reason,recommended_action,cpu_utilization_pct,latency_ms,packet_loss_pct,availability
+INC-00001,2026-11-16 05:00:00,NET-006,Switch-06,Switch,Pune-DC,Warning,High CPU utilization,Investigate device and interface,80.59,29.54,0.0,1
+INC-00002,2026-11-16 10:00:00,NET-007,Server-07,Server,Mumbai-POP,Critical,High CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,88.4,221.13,7.79,1
+INC-00003,2026-11-16 11:00:00,NET-007,Server-07,Server,Mumbai-POP,Critical,Critical CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,95.72,260.15,9.22,1
+INC-00004,2026-11-16 12:00:00,NET-007,Server-07,Server,Mumbai-POP,Critical,Critical CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,92.75,256.42,6.89,1
+INC-00005,2026-11-16 13:00:00,NET-007,Server-07,Server,Mumbai-POP,Critical,Critical CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,98.13,235.62,8.16,1
+INC-00006,2026-11-16 04:00:00,NET-009,Router-09,Router,Hyderabad-POP,Critical,Device unavailable; Critical latency; Critical packet loss,Investigate device and interface,55.22,333.32,16.02,0
+INC-00007,2026-11-16 05:00:00,NET-009,Router-09,Router,Hyderabad-POP,Critical,Device unavailable; Critical latency; Critical packet loss,Investigate device and interface,55.58,305.91,8.49,0
+INC-00008,2026-11-16 13:00:00,NET-009,Router-09,Router,Hyderabad-POP,Warning,High CPU utilization,Investigate device and interface,83.69,27.14,0.0,1
+INC-00009,2026-11-16 18:00:00,NET-009,Router-09,Router,Hyderabad-POP,Critical,Device unavailable; Critical latency; Critical packet loss,Investigate device and interface,56.61,387.29,12.97,0
+INC-00010,2026-11-16 08:00:00,NET-011,Server-11,Server,Pune-DC,Warning,High CPU utilization,Investigate device and interface,86.16,39.64,0.52,1
+INC-00011,2026-11-16 09:00:00,NET-011,Server-11,Server,Pune-DC,Critical,Critical CPU utilization,Investigate device and interface,90.5,25.33,0.0,1
+INC-00012,2026-11-16 20:00:00,NET-011,Server-11,Server,Pune-DC,Critical,Critical CPU utilization,Investigate device and interface,90.13,19.0,0.52,1
+INC-00013,2026-11-16 11:00:00,NET-012,Firewall-12,Firewall,Mumbai-POP,Critical,Critical CPU utilization,Investigate device and interface,92.5,42.22,0.15,1
+INC-00014,2026-11-16 10:00:00,NET-014,Switch-14,Switch,Hyderabad-POP,Critical,Critical CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,91.33,311.08,6.93,1
+INC-00015,2026-11-16 11:00:00,NET-014,Switch-14,Switch,Hyderabad-POP,Critical,Critical CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,95.92,236.52,11.26,1
+INC-00016,2026-11-16 12:00:00,NET-014,Switch-14,Switch,Hyderabad-POP,Critical,Critical CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,92.49,224.81,5.01,1
+INC-00017,2026-11-16 13:00:00,NET-014,Switch-14,Switch,Hyderabad-POP,Critical,Critical CPU utilization; High latency; Critical packet loss,Investigate device and interface,95.29,153.36,6.61,1
+INC-00018,2026-11-16 04:00:00,NET-015,Server-15,Server,Delhi-DC,Warning,High CPU utilization,Investigate device and interface,82.23,15.47,0.92,1
+INC-00019,2026-11-16 12:00:00,NET-015,Server-15,Server,Delhi-DC,Warning,High CPU utilization,Investigate device and interface,87.33,24.96,0.9,1
+INC-00020,2026-11-16 04:00:00,NET-018,Switch-18,Switch,Bengaluru-DC,Critical,Device unavailable; Critical latency; Critical packet loss,Investigate device and interface,56.31,308.87,17.24,0
+INC-00021,2026-11-16 05:00:00,NET-018,Switch-18,Switch,Bengaluru-DC,Critical,Device unavailable; Critical latency; Critical packet loss,Investigate device and interface,39.27,352.06,13.63,0
+INC-00022,2026-11-16 18:00:00,NET-018,Switch-18,Switch,Bengaluru-DC,Critical,Device unavailable; Critical latency; Critical packet loss,Investigate device and interface,73.71,319.55,14.9,0
+INC-00023,2026-11-16 01:00:00,NET-019,Server-19,Server,Hyderabad-POP,Warning,High CPU utilization,Investigate device and interface,85.95,29.43,0.12,1
+INC-00024,2026-11-16 13:00:00,NET-020,Firewall-20,Firewall,Delhi-DC,Warning,High CPU utilization,Investigate device and interface,80.56,50.2,0.29,1
+INC-00025,2026-11-16 10:00:00,NET-021,Router-21,Router,Pune-DC,Critical,Critical CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,91.33,212.78,5.89,1
+INC-00026,2026-11-16 11:00:00,NET-021,Router-21,Router,Pune-DC,Critical,Critical CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,95.07,297.42,11.99,1
+INC-00027,2026-11-16 12:00:00,NET-021,Router-21,Router,Pune-DC,Critical,Critical CPU utilization; Critical latency; Elevated packet loss,Investigate device and interface,96.71,228.36,4.65,1
+INC-00028,2026-11-16 13:00:00,NET-021,Router-21,Router,Pune-DC,Critical,Critical CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,92.48,246.59,8.42,1
+INC-00029,2026-11-16 08:00:00,NET-022,Switch-22,Switch,Mumbai-POP,Warning,High CPU utilization,Investigate device and interface,87.75,20.18,0.24,1
+INC-00030,2026-11-16 09:00:00,NET-022,Switch-22,Switch,Mumbai-POP,Critical,Critical CPU utilization,Investigate device and interface,93.8,29.91,0.14,1
+INC-00031,2026-11-16 17:00:00,NET-022,Switch-22,Switch,Mumbai-POP,Warning,High CPU utilization,Investigate device and interface,88.8,10.68,0.51,1
+INC-00032,2026-11-16 20:00:00,NET-022,Switch-22,Switch,Mumbai-POP,Warning,High CPU utilization,Investigate device and interface,82.61,3.87,0.96,1
+INC-00033,2026-11-16 04:00:00,NET-027,Server-27,Server,Mumbai-POP,Critical,Device unavailable; Critical latency; Critical packet loss,Investigate device and interface,38.52,288.68,14.93,0
+INC-00034,2026-11-16 05:00:00,NET-027,Server-27,Server,Mumbai-POP,Critical,Device unavailable; Critical latency; Critical packet loss,Investigate device and interface,17.47,351.13,11.4,0
+INC-00035,2026-11-16 18:00:00,NET-027,Server-27,Server,Mumbai-POP,Critical,Device unavailable; Critical latency; Critical packet loss,Investigate device and interface,37.0,301.72,12.21,0
+INC-00036,2026-11-16 10:00:00,NET-028,Firewall-28,Firewall,Bengaluru-DC,Critical,High CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,89.99,264.72,6.11,1
+INC-00037,2026-11-16 11:00:00,NET-028,Firewall-28,Firewall,Bengaluru-DC,Critical,Critical CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,93.13,211.42,10.82,1
+INC-00038,2026-11-16 12:00:00,NET-028,Firewall-28,Firewall,Bengaluru-DC,Critical,Critical CPU utilization; High latency; Critical packet loss,Investigate device and interface,91.77,156.63,7.96,1
+INC-00039,2026-11-16 13:00:00,NET-028,Firewall-28,Firewall,Bengaluru-DC,Critical,Critical CPU utilization; Critical latency; Critical packet loss,Investigate device and interface,96.88,309.27,8.85,1
+INC-00040,2026-11-16 18:00:00,NET-029,Router-29,Router,Hyderabad-POP,Warning,High CPU utilization,Investigate device and interface,85.86,36.73,0.15,1
+INC-00041,2026-11-16 02:00:00,NET-030,Switch-30,Switch,Delhi-DC,Warning,High CPU utilization,Investigate device and interface,87.38,11.49,0.14,1

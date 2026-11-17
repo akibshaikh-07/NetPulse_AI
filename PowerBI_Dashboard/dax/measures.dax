@@ -1,0 +1,65 @@
+// NetPulse AI - DAX measures
+// Tables: network_analysis (fact), incidents, device_summary, dim_devices, dim_hour
+// Tip: create a blank table called "_Measures" and keep all measures there.
+
+Total Devices = DISTINCTCOUNT ( network_analysis[device_id] )
+
+Total Readings = COUNTROWS ( network_analysis )
+
+Total Incidents =
+CALCULATE ( COUNTROWS ( network_analysis ), network_analysis[incident_flag] = 1 )
+
+Critical Incidents =
+CALCULATE ( COUNTROWS ( network_analysis ), network_analysis[severity] = "Critical" )
+
+Warning Incidents =
+CALCULATE ( COUNTROWS ( network_analysis ), network_analysis[severity] = "Warning" )
+
+Incident Rate % = DIVIDE ( [Total Incidents], [Total Readings] )
+
+Critical Share % = DIVIDE ( [Critical Incidents], [Total Incidents] )
+
+Availability % = AVERAGE ( network_analysis[availability] )
+
+Unavailable Events =
+CALCULATE ( COUNTROWS ( network_analysis ), network_analysis[availability] = 0 )
+
+Avg Latency (ms) = AVERAGE ( network_analysis[latency_ms] )
+
+Avg CPU (%) = AVERAGE ( network_analysis[cpu_utilization_pct] )
+
+Avg Packet Loss (%) = AVERAGE ( network_analysis[packet_loss_pct] )
+
+Avg Health Score = AVERAGE ( network_analysis[health_score] )
+
+// Used for conditional formatting (Format > Cell elements > Background colour > Rules / Field value)
+Health Colour =
+SWITCH (
+    TRUE (),
+    [Avg Health Score] < 78, "#FBD5D8",
+    [Avg Health Score] < 82, "#FDEBC8",
+    "#D6EFEA"
+)
+
+Severity Colour =
+SWITCH (
+    SELECTEDVALUE ( incidents[severity] ),
+    "Critical", "#D64550",
+    "Warning", "#F2A93B",
+    "#2B9A8F"
+)
+
+// Subtitle text for card visuals
+Incidents Subtitle =
+FORMAT ( [Incident Rate %], "0.0%" ) & " of readings"
+
+// Hour-of-day label (for sorting use dim_hour[hour] as 'Sort by column')
+Peak Incident Hour =
+VAR t =
+    ADDCOLUMNS (
+        VALUES ( dim_hour[hour] ),
+        "@n", CALCULATE ( [Total Incidents] )
+    )
+VAR mx = MAXX ( t, [@n] )
+RETURN
+    MAXX ( FILTER ( t, [@n] = mx ), dim_hour[hour_label] )
